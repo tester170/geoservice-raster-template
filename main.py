@@ -238,13 +238,13 @@ with right:  # Правая колонка.
         overlap = b.selectbox("Перекрытие", list(OVERLAPS),  # Перекрытие фрагментов.
                               help="Перекрытие соседних фрагментов при сегментации уменьшает видимость стыков.")
         today = datetime.date.today()  # Верхний предел дат.
-        summer = today.year if today >= datetime.date(today.year, 9, 1) else today.year - 1  # Последнее завершённое лето.
-        past = info["years"][0] if len(info["years"]) == 2 else summer - 5  # Год сравнения.
-        first_day = datetime.date(2017, 4, 1)  # Начало снимков Sentinel-2 L2A.
         m1, d1 = map(int, info["seasons"][0][0].split("-"))  # Начало сезона темы: месяц, день.
         m2, d2 = map(int, info["seasons"][-1][1].split("-"))  # Конец сезона темы.
+        summer = today.year if today >= datetime.date(today.year, m2, d2) else today.year - 1  # Последний завершённый сезон.
+        past = info["years"][0] if len(info["years"]) == 2 else summer - 5  # Год сравнения.
+        first_day = datetime.date(2017, 4, 1)  # Начало снимков Sentinel-2 L2A.
         a, b = st.columns([1, 2.5], gap="xsmall", vertical_alignment="center")  # Подпись и даты рядом.
-        a.caption("Снимки", help=f"Для AlphaEarth берётся год начала периода. Последний доступный год — "  # Подпись периода.
+        a.caption("Снимки", help=f"Для AlphaEarth берётся год начала периода. Последний доступный год – "  # Подпись периода.
                                  f"{info.get('last_embedding_year', 2025)}.")
         # Период снимков.
         period = b.date_input("Снимки", (datetime.date(summer, m1, d1), datetime.date(summer, m2, d2)), min_value=first_day,
@@ -384,7 +384,7 @@ with right, st.container(border=True, gap="xsmall"):  # Блок таблиц.
                      column_config={c: st.column_config.NumberColumn(format="%.2f") for c in table})
         if result.get("matrix"):  # Есть матрица переходов.
             with st.expander("Матрица переходов, км²"):  # Свёрнутый блок.
-                st.caption(f"Строки — {label(result['compare_year'])}, столбцы — {label(result['year'])}")  # Пояснение.
+                st.caption(f"Строки – {label(result['compare_year'])}, столбцы – {label(result['year'])}")  # Пояснение.
                 # Матрица переходов.
                 st.dataframe(pd.DataFrame(result["matrix"], index=result["classes"], columns=result["classes"]), width="stretch")
     if seg:  # Доли классов сегментации.
