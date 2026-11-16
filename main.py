@@ -33,8 +33,9 @@ API_URL = (os.environ.get("API_URL") or secret("API_URL")).rstrip("/")
 SERVICE = Path(__file__).resolve().parent  # Папка сервиса.
 
 
-def code_version():  # Время последнего изменения кода серверной части.
-    files = [*SERVICE.glob("server/*.py"), SERVICE / "extensions.py"]  # Код серверной части и собственная функция.
+def code_version():  # Время последнего изменения кода серверной части и модели.
+    # Код серверной части, собственная функция и файлы модели.
+    files = [*SERVICE.glob("server/*.py"), SERVICE / "extensions.py", *SERVICE.glob("models/**/*.*")]
     return max(f.stat().st_mtime for f in files)  # Обновили репозиторий – значение изменилось.
 
 
@@ -57,8 +58,8 @@ def call(method, path, **kwargs):  # Запрос к серверной част
     return local_api(code_version()).request(method, path, **kwargs)  # Тот же запрос без сети.
 
 
-@st.cache_data(show_spinner=False)  # Сведения о модели запрашиваются один раз.
-def health():  # Модель, классы, сезоны и варианты серверной части.
+@st.cache_data(show_spinner=False)  # Сведения о модели – один раз на версию кода и модели.
+def health(version):  # Модель, классы, сезоны и варианты серверной части; version – только для ключа кэша.
     response = call("GET", "/health", timeout=60)  # Ответ /health.
     response.raise_for_status()  # Ответ с ошибкой не попадает в кэш.
     return response.json()  # Модель, классы, сезоны.
@@ -114,7 +115,7 @@ def picture(png, bounds, show=True):  # Картинка PNG от серверн
 
 
 try:
-    info, cities = health(), get("/cities")  # Сведения о модели и справочник городов.
+    info, cities = health(code_version()), get("/cities")  # Сведения о модели и справочник городов.
 except requests.RequestException:  # Серверная часть не запущена или недоступна.
     st.error(f"Нет связи с серверной частью {API_URL}. Обновите страницу, когда она запустится.")  # Понятное сообщение вместо трассировки.
     st.stop()  # Без сведений о модели страница не строится.
