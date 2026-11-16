@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+osm_data/
+.streamlit/secrets.toml
+*.json.key
+*-key.json
+service-account*.json
+cache/

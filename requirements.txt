@@ -1,0 +1,17 @@
+earthengine-api
+numpy
+pyproj
+rasterio
+shapely>=2.1
+osmnx==2.1.1
+pyogrio
+pillow
+onnxruntime
+fastapi
+httpx
+uvicorn[standard]
+streamlit>=1.67
+streamlit-folium
+folium
+pandas
+requests
