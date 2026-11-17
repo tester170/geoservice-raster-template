@@ -400,5 +400,5 @@ with right, st.container(border=True, gap="xsmall"):  # Блок таблиц.
         if ext.get("table"):  # Есть таблица.
             st.dataframe(pd.DataFrame(ext["table"]), width="stretch", hide_index=True, row_height=28)  # Таблица функции.
         st.subheader("Модель")  # Заголовок сведений о модели.
-        st.caption(f"{result['mode'].capitalize()} · пиксель {result['scale']} м")  # Режим и пиксель.
+        st.caption(f"{result['mode'][:1].upper() + result['mode'][1:]} · пиксель {result['scale']} м")  # Режим и пиксель.
         st.dataframe(pd.DataFrame({"значение": result["metrics"]}), width="stretch", row_height=28)  # Точность модели.
