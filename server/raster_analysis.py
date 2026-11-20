@@ -162,8 +162,11 @@ def season(collection, when, seasons):
     """Снимки периода: год (сезоны темы, последний день включается) или интервал дат (начало, день после конца)."""
     if isinstance(when, (tuple, list)):  # Интервал дат.
         return collection.filterDate(when[0], when[1])  # Конец интервала не включается.
-    # Год: объединение сезонов темы этого года.
-    return collection.filter(ee.Filter.Or(*[ee.Filter.date(ee.Date(f"{when}-{a}"), ee.Date(f"{when}-{b}").advance(1, "day"))
+    # Год: объединение сезонов темы этого года. Сначала быстрый отбор по всему охвату дат: условие «любой из интервалов»
+    # по необрезанной коллекции (Dynamic World) Earth Engine иначе проверяет снимок за снимком по всему каталогу.
+    span = collection.filterDate(ee.Date(f"{when}-{min(a for a, _ in seasons)}"),
+                                 ee.Date(f"{when}-{max(b for _, b in seasons)}").advance(1, "day"))
+    return span.filter(ee.Filter.Or(*[ee.Filter.date(ee.Date(f"{when}-{a}"), ee.Date(f"{when}-{b}").advance(1, "day"))
                                             for a, b in seasons]))
 
 
