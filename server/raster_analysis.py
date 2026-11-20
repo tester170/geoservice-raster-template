@@ -1,7 +1,7 @@
 # Расчёт растрового сервиса: справочник городов и граница города (OpenStreetMap), композит Sentinel-2, признаки и
 # классификация в Earth Engine, карта классов массивом NumPy, площади, изменения, выгрузка в PNG, GeoTIFF и
 # GeoJSON; сегментация нейронной сетью SegFormer-B0 в ONNX Runtime на процессоре.
-import io, json, os, time
+import io, json, os, time, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 import urllib3
@@ -9,7 +9,7 @@ import ee
 import onnxruntime as ort
 import osmnx as ox
 import rasterio, rasterio.features
-import shapely
+import shapely, shapely.geometry
 from PIL import Image
 from pyproj import Transformer
 from rasterio.features import geometry_mask
@@ -63,10 +63,29 @@ CITIES = {  # Город: объект OpenStreetMap с границей.
 }
 
 
+BORDERS_URL = "https://raw.githubusercontent.com/tester170/geoservice-internship-data/main/osm/borders.geojson"  # Границы 41 города.
+BORDERS = {}  # Номер объекта OSM: граница; заполняется при первом обращении.
+
+
+def border(osm_id):
+    """Граница города справочника из подготовленного файла GitHub: не зависит от правок OpenStreetMap и доступности
+    Nominatim. Без связи с GitHub – из Nominatim по номеру объекта."""
+    if not BORDERS:  # Файл ещё не загружен.
+        try:
+            with urllib.request.urlopen(BORDERS_URL, timeout=60) as answer:  # GeoJSON всех городов.
+                for feature in json.load(answer)["features"]:
+                    BORDERS[feature["properties"]["osm_id"]] = shapely.geometry.shape(feature["geometry"])
+        except (OSError, ValueError, KeyError):  # GitHub недоступен.
+            pass
+    if osm_id in BORDERS:
+        return BORDERS[osm_id]  # Многоугольник в WGS 84.
+    return ox.geocode_to_gdf(osm_id, by_osmid=True).geometry.iloc[0]  # Запасной путь – Nominatim.
+
+
 def place(city):
     """Граница города: из справочника – по номеру объекта, любой другой город – поиском по названию."""
     if city in CITIES:  # Город справочника – по номеру объекта.
-        return ox.geocode_to_gdf(CITIES[city], by_osmid=True).geometry.iloc[0]  # Граница по номеру.
+        return border(CITIES[city])  # Подготовленная граница.
     try:
         found = ox.geocode_to_gdf(city)  # Поиск по названию в Nominatim.
     except Exception:  # Ничего не найдено.
